@@ -25,7 +25,7 @@ runs:
         python-version: '3.13'
 
     - name: Set up ThreePiO
-      run: pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ threepio>=1.0.0
+      run: pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ threepio
       shell: bash
 
     - name: Decode Vertex AI Service Account Key for Vertex AI
@@ -79,3 +79,18 @@ runs:
         rm -f "$GOOGLE_APPLICATION_CREDENTIALS"
         rm -f service-account-key.json
       shell: bash
+
+    - name: Create Pull Request
+      uses: peter-evans/create-pull-request@v7
+      with:
+        commit-message: "[Bot] Update localization files from commit ${{ steps.commit-info.outputs.sha_short }}"
+        title: "[Bot] Localization Update (${{ steps.commit-info.outputs.sha_short }})"
+        body: |
+          🤖 **This PR was automatically created by the threepio-runner workflow.**
+
+          Localization files have been updated from commit ${{ steps.commit-info.outputs.sha_short }}.
+
+          Original commit message: "${{ steps.commit-info.outputs.commit_message }}"
+        branch: localization-${{ steps.commit-info.outputs.sha_short }}
+        base: main
+        labels: automated-pr, bot
