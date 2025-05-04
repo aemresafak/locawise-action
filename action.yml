@@ -79,19 +79,3 @@ runs:
         rm -f "$GOOGLE_APPLICATION_CREDENTIALS"
         rm -f service-account-key.json
       shell: bash
-
-    - name: Create Pull Request
-      if: steps.check-changes.outputs.changes_detected == 'true'
-      uses: peter-evans/create-pull-request@v7
-      with:
-        commit-message: "[Bot] Update localization files from commit ${{ steps.commit-info.outputs.sha_short }}"
-        title: "[Bot] Localization Update (${{ steps.commit-info.outputs.sha_short }})"
-        body: |
-          🤖 **This PR was automatically created by the threepio-runner workflow.**
-
-          Localization files have been updated from commit ${{ steps.commit-info.outputs.sha_short }}.
-
-          Original commit message: "${{ steps.commit-info.outputs.commit_message }}"
-        branch: localization-${{ steps.commit-info.outputs.sha_short }}
-        base: main
-        labels: automated-pr, bot
