@@ -1,0 +1,97 @@
+name: 'threepio-runner'
+description: 'Greet someone'
+inputs:
+  openai-api-key:
+    description: 'OpenAI API key if you are using the GPT models'
+    required: false
+    default: ''
+  vertex-ai-service-account-key-base64:
+    description: 'Vertex AI service account key in base64 format if you are using a model from Vertex AI'
+    required: false
+    default: ''
+outputs:
+  vertex-ai-service-account-key:
+    description: 'Decoded Vertex AI service account key'
+    value: ${{ steps.decode-key.outputs.decoded_key }}
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.13'
+
+    - name: Set up ThreePiO
+      run: pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ threepio>=1.0.0
+      shell: bash
+
+    - name: Decode Vertex AI Service Account Key for Vertex AI
+      id: decode-key
+      env:
+        VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64: ${{ inputs.vertex-ai-service-account-key-base64 }}
+      if: ${{ env.VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64 != '' }}
+      run: |
+        DECODED_KEY=$(echo "$VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64" | tr -d '\n' | base64 --decode)
+        echo "decoded_key<<EOF" >> $GITHUB_OUTPUT
+        echo "$DECODED_KEY" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+      shell: bash
+
+
+    - name: Authenticate to Google Cloud for VertexAI
+      env:
+        VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64: ${{ inputs.vertex-ai-service-account-key-base64 }}
+      if: ${{ env.VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64 != '' }}
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ steps.decode-key.outputs.decoded_key }}
+
+    - name: Run ThreePiO
+      run: python3 -m threepio i18n.yaml
+      shell: bash
+
+    - name: Get commit info
+      id: commit-info
+      run: |
+        SHA_SHORT=$(git rev-parse --short HEAD)
+        echo "sha_short=$SHA_SHORT" >> $GITHUB_OUTPUT
+        COMMIT_MSG=$(git log -1 --pretty=%s | tr -d '\n')
+        echo "commit_message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Check for changes
+      id: check-changes
+      run: |
+        if [[ -n "$(git status --porcelain)" ]]; then
+          echo "changes_detected=true" >> $GITHUB_OUTPUT
+        else
+          echo "changes_detected=false" >> $GITHUB_OUTPUT
+          echo "No changes detected in localization files. Skipping PR creation."
+        fi
+      shell: bash
+
+    - name: Clean up
+      run: |
+        rm -rf threepio
+        rm -f "$GOOGLE_APPLICATION_CREDENTIALS"
+        rm -f service-account-key.json
+      shell: bash
+
+    - name: Create Pull Request
+      if: steps.check-changes.outputs.changes_detected == 'true'
+      uses: peter-evans/create-pull-request@v7
+      with:
+        commit-message: "[Bot] Update localization files from commit ${{ steps.commit-info.outputs.sha_short }}"
+        title: "[Bot] Localization Update (${{ steps.commit-info.outputs.sha_short }})"
+        body: |
+          🤖 **This PR was automatically created by the threepio-runner workflow.**
+
+          Localization files have been updated from commit ${{ steps.commit-info.outputs.sha_short }}.
+
+          Original commit message: "${{ steps.commit-info.outputs.commit_message }}"
+        branch: localization-${{ steps.commit-info.outputs.sha_short }}
+        base: main
+        labels: automated-pr, bot
