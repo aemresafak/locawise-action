@@ -1,5 +1,5 @@
-name: 'threepio-runner'
-description: 'Greet someone'
+name: 'locawise'
+description: 'Localizes applications'
 inputs:
   openai-api-key:
     description: 'OpenAI API key if you are using the GPT models'
@@ -24,8 +24,8 @@ runs:
       with:
         python-version: '3.13'
 
-    - name: Set up ThreePiO
-      run: pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ threepio
+    - name: Set up locawise
+      run: pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ locawise
       shell: bash
 
     - name: Decode Vertex AI Service Account Key for Vertex AI
@@ -49,8 +49,8 @@ runs:
       with:
         credentials_json: ${{ steps.decode-key.outputs.decoded_key }}
 
-    - name: Run ThreePiO
-      run: python3 -m threepio i18n.yaml
+    - name: Run locawise
+      run: python3 -m locawise i18n.yaml
       shell: bash
 
     - name: Get commit info
@@ -75,7 +75,7 @@ runs:
 
     - name: Clean up
       run: |
-        rm -rf threepio
+        rm -rf locawise
         rm -f "$GOOGLE_APPLICATION_CREDENTIALS"
         rm -f service-account-key.json
       shell: bash
@@ -86,7 +86,7 @@ runs:
         commit-message: "[Bot] Update localization files from commit ${{ steps.commit-info.outputs.sha_short }}"
         title: "[Bot] Localization Update (${{ steps.commit-info.outputs.sha_short }})"
         body: |
-          🤖 **This PR was automatically created by the threepio-runner workflow.**
+          🤖 **This PR was automatically created by the locawise workflow.**
 
           Localization files have been updated from commit ${{ steps.commit-info.outputs.sha_short }}.
 
