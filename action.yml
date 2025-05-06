@@ -25,7 +25,7 @@ runs:
         python-version: '3.13'
 
     - name: Set up locawise
-      run: pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ locawise
+      run:  pip3 install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ locawise -q --disable-pip-version-check
       shell: bash
 
     - name: Decode Vertex AI Service Account Key for Vertex AI
