@@ -1,5 +1,10 @@
 # Locawise GitHub Action (`locawise-action`)
 
+## Important Note
+This is beta version of locawise-action. Beta version only works on MacOS GitHub runners due to obfuscation I've applied to the locawise python library. I will publish the non-obfuscated package once I determine the fate of this project and it will be available for all operating systems.
+
+During the beta version, this project might become proprietary and this repository may be made private if this project is acquired by a big player in localization industry.
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
 
 **Automate your localization workflow with AI!** This GitHub Action uses the `locawise` Python package to automatically detect changes in your localization files, translate them using powerful AI models (OpenAI or Google Vertex AI), and create a Pull Request with the updates.
