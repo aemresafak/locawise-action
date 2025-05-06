@@ -93,4 +93,4 @@ runs:
           Original commit message: "${{ steps.commit-info.outputs.commit_message }}"
         branch: localization-${{ steps.commit-info.outputs.sha_short }}
         base: main
-        labels: automated-pr, locawise
+        labels: automated-pr, bot
