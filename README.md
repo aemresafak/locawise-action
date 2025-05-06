@@ -45,9 +45,9 @@ Go from supporting 2-3 languages to virtually ALL languages, for less than your 
 
     target-lang-codes: # Required: A list of language codes for the languages you want
                        # to translate your application into.
-      - fr # Example: French
-      - es # Example: Spanish
-      - de # Example: German
+      - fr
+      - es
+      - de
       # - ja # Optional: Add as many target languages as you need, like Japanese here.
 
     # --- Translation Context & Quality (Optional, but HIGHLY RECOMMENDED for superior translations!) ---
@@ -58,21 +58,16 @@ Go from supporting 2-3 languages to virtually ALL languages, for less than your 
     #            # the more accurate and nuanced the translations will be.
     #   You are translating for "ConnectSphere", a professional networking platform.
     #   Our target audience is early-career professionals and university students.
-    #   The tone should be encouraging, professional, yet approachable.
-    #   Avoid overly casual slang but maintain a friendly voice.
-    #   Key features include "Mentorship Matching" and "Skill Endorsements".
-
+    #   Our application is mainly aimed at connecting ambitious people with each other.
     # glossary: # Optional: Define key terms, brand names, specific jargon, or phrases
     #           # and their required translations (or specify they should not be translated).
     #           # This ensures consistency and accuracy across all target languages.
     #           # Format: source_term: preferred_translation_or_directive
-    #   ConnectSphere: This is the application name. # Ensures brand name is not translated
-    #   Skill Endorsement: Competency Validation # Example for a specific term
-    #   Lingos: The total languages a person can speak 
+    #   ConnectSphere: This is the application name.
+    #   Skill Endorsement: It means competency validation.
+    #   Lingos: The total languages a person can speak. You can translate it as languages
 
     # tone: Professional yet approachable # Optional: Briefly describe the desired overall tone for the
-    #                                     # This acts as a quick guide for the AI, complementing the 'context' field.
-
     # --- AI Configuration (Optional - sensible defaults are used if not specified) ---
 
     # llm-model: gemini-1.5-flash # Optional: Specify the exact LLM model you wish to use.
