@@ -10,146 +10,71 @@ During the beta version, this project might become proprietary and this reposito
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) 
 
-**Automate your localization workflow with AI!** This GitHub Action uses the `locawise` Python package to automatically detect changes in your localization files, translate them using powerful AI models (OpenAI or Google Vertex AI), and create a Pull Request with the updates.
-
-**Go from supporting 2-3 languages to virtually all languages for the price of a coffee! ☕️**
-
-## Quick Start
-Setting up Locawise is incredibly simple:
-
-1. Add an i18n.yaml configuration file to your repository root
-2. Create a GitHub Actions workflow file (.github/workflows/localize.yml)
-3. Locawise will automatically handle translations whenever you push changes
-
-No complex setup, no maintenance headaches - just effortless localization powered by AI.
-
+# Locawise GitHub Action 🌍🤖✨
 
 ## Table of Contents
 
-* [Why Use Locawise Action?](#why-use-locawise-action)
-* [How it Works](#how-it-works)
-* [Prerequisites](#prerequisites)
-* [Configuration (`i18n.yaml`)](#configuration-i18nyaml)
-* [Usage Examples](#usage-examples)
-  * [1. Spring Boot (.properties) with Vertex AI](#1-spring-boot-properties-with-vertex-ai)
-  * [2. React (.json) with Vertex AI](#2-react-json-with-vertex-ai)
-  * [3. React (.json) with OpenAI (GPT)](#3-react-json-with-openai-gpt)
-* [Action Inputs](#action-inputs)
-* [Required Permissions](#required-permissions)
-* [Under the Hood: `locawise`](#under-the-hood-locawise)
-* [Supported Features](#supported-features)
-* [Cost Considerations](#cost-considerations)
-* [Contributing](#contributing)
-* [License](#license)
+- [Why Choose Locawise?](#why-choose-locawise)
+- [How It Works](#how-it-works)
+- [Quick Start](#-quick-start)
+  - [Create Workflow File](#create-workflow-file)
+  - [Add Secrets](#add-secrets)
+  - [Enable Automatic PRs](#enable-automatic-prs)
+  - [Push to main](#push-to-main)
+- [Basic Usage: Example with a React App](#-basic-usage-example-with-a-react-app)
+- [Action Inputs](#action-inputs)
+- [Export to Sheets](#export-to-sheets)
+- [The i18n.yaml Configuration File](#-the-i18nyaml-configuration-file-generated-by-the-action)
+- [Choosing Your LLM Provider](#choosing-your-llm-provider)
+- [Supported File Formats](#supported-file-formats)
+- [Behind the Scenes: Efficiency and Resilience](#behind-the-scenes-efficiency-and-resilience)
+- [Contributing](#-contributing)
+- [License](#-license)
 
-## Why Use Locawise Action?
+Supporting 2 or 3 languages? With Locawise, support virtually ALL languages for the price of a coffee! ☕
 
-* **Fully Automated:** Set it up once, and let AI handle localization updates on every push.
-* **AI-Powered Translations:** Leverage state-of-the-art LLMs (OpenAI GPT models, Google Vertex AI Gemini models) for high-quality, context-aware translations.
-* **Context & Glossary Aware:** Define your application's context, tone, and glossary directly in a config file (`i18n.yaml`) for accurate results.
-* **Seamless Integration:** Fits directly into your existing GitHub workflow. Detects changes, translates, and creates a PR automatically.
-* **Cost-Effective:** Pay only for the LLM usage – potentially near-zero cost with efficient models like Gemini.
-* **Efficient:** Uses a lock file (`i18n.lock`) to only translate *new* or *changed* keys, saving time and cost.
-* **Simple Setup:** Requires minimal configuration in your workflow file and a straightforward YAML config for `locawise`.
+Locawise is your smart AI localization co-pilot, seamlessly integrated into your GitHub workflow. It automatically detects changes in your application's localization files, translates them using cutting-edge AI, and creates a pull request with the updates. Go global, effortlessly!
 
-## How it Works
+## Why Choose Locawise?
 
-1. **Trigger:** Runs on specific events in your repository (e.g., `push` to the main branch).
-2. **Checkout:** Checks out your repository code.
-3. **Setup:** Installs Python and the `locawise` package.
-4. **Authenticate (Optional):** Authenticates with Google Cloud if using Vertex AI.
-5. **Run Locawise:** Executes the `locawise` command-line tool, pointing it to your `i18n.yaml` configuration file.
-   * `locawise` parses the config and compares your source language file with target language files using `i18n.lock`.
-   * Identifies new or modified keys.
-   * Sends these keys (with context, glossary, and tone) to the configured LLM for translation.
-   * Updates the target language files.
-   * Updates the `i18n.lock` file.
-6. **Check for Changes:** Determines if `locawise` modified any localization files.
-7. **Create Pull Request:** If changes were detected, it automatically creates a Pull Request with the updated localization files using [peter-evans/create-pull-request](https://github.com/peter-evans/create-pull-request).
+- 🚀 **Automated & Effortless**: Set it up once, and Locawise handles new translations whenever you push to your main branch. No more manual tracking or tedious copy-pasting!
+- 🧠 **Context-Aware AI Translations**: Powered by OpenAI (GPT models) and Google Vertex AI (Gemini models), Locawise understands your application's context, glossary, and desired tone, delivering translations that are not just accurate but appropriate.
+- 💰 **Cost-Effective**: Only new or changed text gets translated. Choose an efficient LLM provider like Gemini, and your costs can be close to zero!
+- ⏱️ **Lightning Fast**: Localize thousands of keys in under a minute. Your time is valuable; spend it on coding, not translating.
+- 🛠️ **Developer-Friendly**: Simple YAML configuration (i18n.yaml is generated by the action) lets you define everything from language codes to specific terminology directly in your workflow file.
+- 🔄 **Respects Your Edits**: Manually refined a translation? Locawise's i18n.lock file ensures your specific changes are preserved and only new or source-language modifications trigger AI translation.
+- 🔗 **Flexible LLM Choice**: Pick your preferred LLM provider and model.
+- 💪 **Built-in Resilience**: Temporary LLM provider hiccups? Locawise implements exponential random backoff retries to overcome TPM (Tokens Per Minute) limits.
+- 📂 **Supports Your Format**: Currently supports .json and .properties files, with more formats on the way!
 
-## Prerequisites
+## How It Works
 
-1. **GitHub Repository:** Your project hosted on GitHub.
-2. **Localization Files:** Your application's strings stored in supported formats (currently `.json` or `.properties`).
-3. **`locawise` Configuration File:** An `i18n.yaml` file in your repository (see [Configuration](#configuration-i18nyaml)).
-4. **LLM API Credentials:**
-   * For **OpenAI:** An API key (`OPENAI_API_KEY`).
-   * For **Vertex AI:** A Google Cloud Service Account Key JSON file with permissions for Vertex AI.
-5. **GitHub Secrets:** Store your API credentials securely as GitHub Secrets (e.g., `OPENAI_API_KEY`, `VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64`). **Never commit secrets directly to your repository!**
-6. **Workflow Permissions:** Your GitHub workflow must have `contents: write` and `pull-requests: write` permissions.
-7. **Enable GitHub Actions to Create PRs:** Some repositories may need to explicitly enable GitHub Actions to create pull requests. You can do this in your repository's Settings → Actions → General → Workflow permissions, and ensure "Allow GitHub Actions to create and approve pull requests" is checked.
+The locawise-action leverages the locawise Python package.
 
-## Configuration (`i18n.yaml`)
+1. It checks out your repository.
+2. Sets up Python and installs locawise.
+3. Dynamically creates an i18n.yaml configuration file based on your workflow inputs.
+4. Runs locawise to:
+   - Identify changes in your source language file using an i18n.lock file.
+   - Translate only the new or modified keys into your target languages using the specified LLM, context, and glossary.
+   - Update your target language files.
+5. Commits the changes and creates a pull request for your review.
 
-This action relies on the `locawise` Python package, which requires a configuration file (e.g., `i18n.yaml`) **in your repository root**, following the structure below.
+## 🚀 Quick Start
 
-**Example `i18n.yaml`:**
+Get Locawise up and running in your project in minutes!
+
+### Create Workflow File
+
+Add a new workflow file to your repository (e.g., `.github/workflows/localize.yml`):
 
 ```yaml
-# Localization Configuration
-version: v1.0 # Config schema version (required)
-
-localization-root-path: ./path/to/your/localization/files # Relative path from repo root (required)
-file-name-pattern: "{language}.json" # Use {language} placeholder (required). E.g., en.json, tr.json
-source-lang-code: en # Source language code (required)
-target-lang-codes: # List of target language codes (required)
-  - tr
-  - it
-  - es
-  - fr
-  # Add as many languages as you need!
-
-# --- AI Configuration ---
-llm-model: gemini-1.5-flash # Optional: Specify the exact LLM model (e.g., 'gpt-4o', 'gemini-1.5-pro')
-llm-location: us-central1 # Optional: Specify the LLM location/region if applicable (e.g., for Vertex AI)
-
-# --- Context, Glossary & Tone (Crucial for Quality!) ---
-context: | # Optional: Detailed instructions for the AI about your app, audience, etc.
-  You are translating for a fintech app called Verolut.
-  Verolut offers business accounts for SMEs and freelancers.
-  Target Audience: Small business owners, freelancers in USA.
-
-glossary: # Optional: Define key terms and their required translations
-  merchant: Business using Verolut (company, sole trader).
-  member: Individual user linked to a merchant account.
-  ledger: Bank account.
-  # Add your specific terminology
-
-tone: Professional but friendly # Optional: Specify the desired tone for translations
-```
-
-### Key Fields:
-
-| Field | Requirement | Default Value | Description |
-|-------|-------------|---------------|-------------|
-| **version** | Required | None | The version of the configuration schema being used. |
-| **source-lang-code** | Required | None | The language code of your primary language file (e.g., en). |
-| **file-name-pattern** | Required | None | How your language files are named. {language} is replaced by the language code (e.g., en, tr). |
-| **target-lang-codes** | Required | None | A list of language codes you want to translate into. |
-| **localization-root-path** | Optional | Empty string ("") | Path to the directory containing your language files (relative to repo root). |
-| **context** | Optional | Empty string ("") | Detailed instructions for the AI about your application, tone, style, and target audience. The more detail, the better the translation! |
-| **glossary** | Optional | Empty dictionary | Define specific terms and their required translations to ensure consistency. Keys are the source term, values are the target term (though the AI uses this for context across all target languages). |
-| **tone** | Optional | Empty string ("") | A description of the desired tone (e.g., "Formal", "Playful", "Professional but friendly"). |
-| **llm-model** | Optional | None | The specific model name from the provider (e.g., gpt-4o, gemini-1.5-flash). If omitted, locawise will use a default. |
-| **llm-location** | Optional | None | The geographic location or region for the LLM API endpoint, if applicable (e.g., for Vertex AI). |
-
-## Usage Examples
-
-Here are a few examples demonstrating how to configure the workflow and i18n.yaml for common scenarios.
-
-### 1. Spring Boot (.properties) with Vertex AI
-
-This example assumes your Spring Boot project stores localization files in src/main/resources/i18n with names like messages_en.properties, messages_fr.properties, etc. We'll use Google Vertex AI for translation.
-
-**Workflow Setup (.github/workflows/localize.yml):**
-
-```yaml
-name: Automatic Localization (Spring Boot)
+name: Localize Application Content
 
 on:
   push:
     branches:
-      - main
+      - main # Or your default branch
 
 permissions:
   contents: write
@@ -157,205 +82,242 @@ permissions:
 
 jobs:
   localize:
-    runs-on: ubuntu-latest
-    name: Run Locawise AI Localization (Vertex AI)
+    runs-on:  macos-latest
     steps:
-      - name: Run Locawise Action
-        uses: aemresafak/locawise-action@v1 # <-- Use the latest version tag
+      - name: Run Locawise Localization
+        uses: aemresafak/locawise-action@v1 # Use the latest version
         with:
-          # Provide ONLY the Vertex AI key secret for Vertex AI models
+          # === Provider API Keys (Choose one) ===
+          # openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          vertex-ai-service-account-key-base64: ${{ secrets.VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64 }} # Required if using Vertex AI
+
+          # === Core Configuration ===
+          source-lang-code: 'en'
+          file-name-pattern: '{language}.json' # e.g., en.json, fr.json for React/Vue apps
+                                             # or messages_{language}.properties for Java
+          target-lang-codes: 'es,fr,de,it,tr,ja' # Comma-separated target languages
+          localization-root-path: 'public/locales' # Path to your i18n files (e.g., public/locales, src/i18n)
+
+          # === Context (Highly Recommended) ===
+          context: |
+            You are translating for "MyApp", a productivity application for creative professionals.
+            Our users are designers, writers, and artists.
+          glossary: |
+            Project: A user's main workspace.
+            Canvas: The area where users create their work.
+            Export: The action of saving work to a file.
+
+         tone: Be as polite as possible while also being friendly
+
+          # === Optional: LLM Specifics ===
+          # llm-model: 'gemini-1.5-flash' # e.g., 'gpt-4o', 'gemini-1.5-pro' (uses provider default if unset)
+          # llm-location: 'us-central1' # For Vertex AI, if needed
+
+      - name: Get commit info
+        id: commit-info
+        run: |
+          SHA_SHORT=$(git rev-parse --short HEAD)
+          echo "sha_short=$SHA_SHORT" >> $GITHUB_OUTPUT
+          COMMIT_MSG=$(git log -1 --pretty=%s | tr -d '\n')
+          echo "commit_message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "[Bot] Update localization files from commit ${{ steps.commit-info.outputs.sha_short }}"
+          title: "[Bot] Localization Update (${{ steps.commit-info.outputs.sha_short }})"
+          body: |
+            🤖 This PR was automatically created by the locawise workflow.
+            Localization files have been updated from commit ${{ steps.commit-info.outputs.sha_short }}.
+            Original commit message: "${{ steps.commit-info.outputs.commit_message }}"
+          branch: localization-${{ steps.commit-info.outputs.sha_short }}
+          base: main # Or your default branch
+          labels: automated-pr, bot, localization
+```
+
+### Add Secrets
+
+- **OpenAI**: If using OpenAI, add your OpenAI API key as `OPENAI_API_KEY` in your repository's Settings > Secrets and variables > Actions.
+- **Vertex AI**: If using Google Vertex AI:
+  1. Create a Google Cloud service account with the "Vertex AI User" role (or more granular permissions as needed).
+  2. Download the JSON key file for this service account.
+  3. **IMPORTANT**: You MUST Base64 encode the entire content of this JSON key file.
+     - On Linux/macOS, you can use the terminal: `cat /path/to/your-key-file.json | base64 -w 0` (the `-w 0` flag prevents line wrapping).
+     - On Windows, you can use PowerShell: `[Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes((Get-Content -Path "/path/to/your-key-file.json" -Raw)))`
+     - Alternatively, use a trusted local Base64 encoding tool. Do not paste your key into untrusted online encoders.
+  4. Add the resulting Base64 encoded string as `VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64` in your repository's Settings > Secrets and variables > Actions.
+
+### Enable Automatic PRs
+
+1. **Enable GitHub Actions to Create PRs:** Some repositories may need to explicitly enable GitHub Actions to create pull requests. You can do this in your repository's Settings → Actions → General → Workflow permissions, and ensure "Allow GitHub Actions to create and approve pull requests" is checked.
+
+### Push to main
+
+Make a change to your source language file (e.g., `public/locales/en.json`) and push to your main branch. Locawise will automatically run, translate, and create a PR!
+
+## 📖 Basic Usage: Example with a React App
+
+Let's say you have a React application (like one created with Create React App or Vite) structured to serve localization files from the public directory:
+
+```
+my-react-app/
+├── public/
+│   └── locales/               <-- Your localization files live here
+│       ├── en.json            <-- Source language
+│       ├── es.json
+│       └── fr.json
+├── src/
+│   ├── components/
+│   └── App.js
+└── package.json
+```
+
+Your source file `public/locales/en.json` might look like:
+
+```json
+{
+  "app.title": "My Awesome React App",
+  "greeting.morning": "Good morning, {name}!",
+  "button.submit": "Submit"
+}
+```
+
+Here's how you'd configure the locawise-action in your `.github/workflows/localize.yml`:
+
+```yaml
+# ... (name, on, permissions, jobs.localize.runs-on sections as above) ...
+    steps:
+      - name: Run Locawise Localization
+        uses: aemresafak/locawise-action@v1
+        with:
+          # Assuming Vertex AI for this example
           vertex-ai-service-account-key-base64: ${{ secrets.VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64 }}
+          source-lang-code: 'en'
+          file-name-pattern: '{language}.json' # Standard naming for React/Vue i18n
+          target-lang-codes: 'es,fr' # Translate to Spanish and French
+          localization-root-path: 'public/locales' # Path to the directory
+          context: |
+            You are translating for "My Awesome React App".
+            This is a user-facing application for horse owners.
+          glossary: |
+            React: A JavaScript library for building user interfaces. (Keep as "React")
+          # llm-model: 'gemini-1.5-flash' # Optional: Specify a model
+# ... (Create Pull Request steps as above) ...
 ```
 
-**Configuration (i18n.yaml):**
+When you update `public/locales/en.json` and push, Locawise will:
 
-```yaml
-version: v1.0
-source-lang-code: en
-target-lang-codes:
-  - fr
-  - de
-  - es
-localization-root-path: ./src/main/resources/i18n # Path to your i18n directory
-file-name-pattern: "messages_{language}.properties" # Matches files like messages_en.properties
+1. Detect the changes.
+2. Translate them into Spanish (`public/locales/es.json`) and French (`public/locales/fr.json`).
+3. Create a PR with these updated files.
 
-# --- AI Configuration (Vertex AI) ---
-llm-model: gemini-1.5-flash # Or another Gemini model
-llm-location: us-central1 # Specify your Vertex AI region
+It's that simple!
 
-# --- Context, Glossary & Tone ---
-context: |
-  Translating for a Spring Boot backend application providing financial services.
-  Maintain a formal and secure tone.
-glossary:
-  transaction: financial operation
-  balance: account amount
-tone: Formal
+## 📖 Example: Spring Boot Project with Properties Files
+
+For a Spring Boot application using the common `messages_*.properties` files for internationalization:
+
+```
+my-spring-app/
+├── src/
+│   └── main/
+│       ├── java/
+│       │   └── com/
+│       │       └── myapp/
+│       │           └── Application.java
+│       └── resources/
+│           ├── messages_en.properties    <-- Source language
+│           ├── messages_es.properties
+│           └── messages_fr.properties
+└── pom.xml
 ```
 
-### 2. React (.json) with Vertex AI
+Your source file `src/main/resources/messages_en.properties` might look like:
 
-This example assumes your React project stores localization files in src/locales with names like en.json, fr.json, etc. We'll use Google Vertex AI for translation.
+```properties
+app.title=My Spring Application
+greeting.welcome=Welcome to our application, {0}!
+button.save=Save
+button.cancel=Cancel
+error.required=This field is required
+```
 
-**Workflow Setup (.github/workflows/localize.yml):**
+Here's how you'd configure the locawise-action in your `.github/workflows/localize.yml`:
 
 ```yaml
-name: Automatic Localization (React)
-
-on:
-  push:
-    branches:
-      - main
-
-permissions:
-  contents: write
-  pull-requests: write
-
-jobs:
-  localize:
-    runs-on: ubuntu-latest
-    name: Run Locawise AI Localization (Vertex AI)
+# ... (name, on, permissions, jobs.localize.runs-on sections as above) ...
     steps:
-      - name: Run Locawise Action
-        uses: aemresafak/locawise-action@v1 # <-- Use the latest version tag
+      - name: Run Locawise Localization
+        uses: aemresafak/locawise-action@v1
         with:
-          # Provide ONLY the Vertex AI key secret for Vertex AI models
-          vertex-ai-service-account-key-base64: ${{ secrets.VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64 }}
-```
-
-**Configuration (i18n.yaml):**
-
-```yaml
-version: v1.0
-source-lang-code: en
-target-lang-codes:
-  - fr
-  - de
-  - es
-localization-root-path: ./src/locales # Path to your locales directory
-file-name-pattern: "{language}.json" # Matches files like en.json
-
-# --- AI Configuration (Vertex AI) ---
-llm-model: gemini-1.5-flash
-llm-location: us-central1
-
-# --- Context, Glossary & Tone ---
-context: |
-  Translating for a React frontend application for an e-commerce platform.
-  Target audience: General consumers.
-glossary:
-  cart: shopping basket
-  checkout: payment process
-tone: Friendly and inviting
-```
-
-### 3. React (.json) with OpenAI (GPT)
-
-This example uses the same React project structure (src/locales/{language}.json) but utilizes OpenAI's GPT models for translation.
-
-**Workflow Setup (.github/workflows/localize.yml):**
-
-```yaml
-name: Automatic Localization (React)
-
-on:
-  push:
-    branches:
-      - main
-
-permissions:
-  contents: write
-  pull-requests: write
-
-jobs:
-  localize:
-    runs-on: ubuntu-latest
-    name: Run Locawise AI Localization (OpenAI)
-    steps:
-      - name: Run Locawise Action
-        uses: aemresafak/locawise-action@v1 # <-- Use the latest version tag
-        with:
-          # Provide ONLY the OpenAI key secret for OpenAI models
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          source-lang-code: 'en'
+          file-name-pattern: 'messages_{language}.properties' # Standard Spring Boot naming
+          target-lang-codes: 'es,fr,de,ja' # Translate to multiple languages
+          localization-root-path: 'src/main/resources' # Path to the directory
+          context: |
+            This is a business application for financial services.
+          glossary: |
+            Spring Boot: A Java framework for building web applications. (Keep as "Spring Boot")
+          tone: "Formal and professional"
+          llm-model: 'gpt-4o' # Using OpenAI's GPT-4o for high quality translations
+# ... (Create Pull Request steps as above) ...
 ```
 
-**Configuration (i18n.yaml):**
+When you update `src/main/resources/messages_en.properties` and push to your main branch, Locawise will:
 
-```yaml
-version: v1.0
-source-lang-code: en
-target-lang-codes:
-  - fr
-  - de
-  - es
-localization-root-path: ./src/locales # Path to your locales directory
-file-name-pattern: "{language}.json" # Matches files like en.json
-
-# --- AI Configuration (OpenAI) ---
-llm-model: gpt-4o # Or another OpenAI model (e.g., gpt-4-turbo)
-
-# --- Context, Glossary & Tone ---
-context: |
-  Translating for a React frontend application for an e-commerce platform.
-  Target audience: General consumers.
-glossary:
-  cart: shopping basket
-  checkout: payment process
-tone: Friendly and inviting
-```
+1. Detect the changes.
+2. Translate only the modified keys into Spanish, French, German, and Japanese.
+3. Update the respective properties files while preserving the placeholders like `{0}`.
+4. Create a PR with the updated files.
 
 ## Action Inputs
 
-| Input | Description | Required | Default | Secret? |
-|-------|-------------|----------|---------|---------|
-| openai-api-key | Your OpenAI API key. Provide this if you intend to use OpenAI models. | No | '' | Yes |
-| vertex-ai-service-account-key-base64 | Your Vertex AI Service Account Key JSON, base64 encoded. Provide this if using Vertex AI. | No | '' | Yes |
+Here's a detailed breakdown of the inputs for locawise-action:
 
-**Note on Vertex AI Key**: You need to base64 encode your service account JSON key before adding it as a secret. You can do this on Linux/macOS with: `base64 -w 0 service-account-key.json` (replace service-account-key.json with your file name). On Windows, you can use `certutil -encode -f service-account-key.json encoded-key.txt` and then copy the contents of encoded-key.txt.
+| Input | Description | Required | Default |
+|-------|-------------|----------|---------|
+| openai-api-key | Your OpenAI API key. Required if using OpenAI GPT models. | false | '' |
+| vertex-ai-service-account-key-base64 | Your Google Cloud service account key (JSON content, Base64 encoded). Required if using Vertex AI models. Ensure the entire JSON content is Base64 encoded. | false | '' |
+| source-lang-code | The language code of your primary (source) language file (e.g., en, de). | true | |
+| file-name-pattern | The naming pattern for your language files. Use {language} as a placeholder for the language code (e.g., {language}.json, messages_{language}.properties). | true | |
+| target-lang-codes | A comma-separated list of target language codes you want to translate into (e.g., es,fr,de,ja). | true | |
+| localization-root-path | Path to the directory containing your language files, relative to the repository root (e.g., src/locales, i18n, public/locales). Defaults to the repository root if empty. | false | '' |
+| context | Crucial for quality! Detailed instructions for the AI about your application's domain, purpose, target audience, and any specific stylistic requirements. Multi-line input is supported. | false | '' |
+| glossary | Define specific terms and their exact required translations. Provide as a YAML formatted string (e.g., "term1: translation1\nterm2: translation2"). Multi-line input is supported. | false | '' |
+| tone | A description of the desired tone for the translations (e.g., "Formal and professional", "Playful and witty", "Neutral"). | false | '' |
+| llm-model | The specific LLM model name from the provider (e.g., gpt-4o, gemini-1.5-flash). If omitted, Locawise uses a default model from the selected provider. | false | '' |
+| llm-location | The geographic location or region for the LLM API endpoint, particularly for Vertex AI (e.g., us-central1, europe-west1). | false | '' |
 
-## Required Permissions
+## Choosing Your LLM Provider
 
-The action requires the following permissions set at the top level of your workflow file:
+Locawise supports:
 
-- **contents: write**: To commit the updated localization files and the i18n.lock file back to the repository branch created for the PR.
-- **pull-requests: write**: To create the Pull Request with the localization changes.
+- **OpenAI**: Access to powerful models like GPT-4o, GPT-4, GPT-3.5-turbo. Requires an `OPENAI_API_KEY`.
+- **Google Vertex AI**: Access to efficient and capable models like Gemini (e.g., gemini-1.5-flash, gemini-1.5-pro). Requires a `VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64` (the Base64 encoded JSON service account key).
 
-```yaml
-permissions:
-  contents: write
-  pull-requests: write
-```
+You can provide secrets for the provider that you want to use.
 
-## Under the Hood: `locawise`
+## Supported File Formats
 
-This action is a wrapper around the `locawise` Python package. `locawise` handles the core logic:
-- Parsing the `i18n.yaml` configuration.
-- Reading source and target language files.
-- Using `i18n.lock` to track translated keys and avoid re-translating unchanged content.
-- Interacting with the configured LLM API (OpenAI or Vertex AI).
-- Implementing resilience features like exponential backoff for API rate limits.
+- ✅ `.json` (key-value, including nested objects; commonly used with `{language}.json` naming)
+- ✅ `.properties` (Java properties files; commonly used with `messages_{language}.properties` naming)
+- 🔜 More formats coming soon! The architecture is designed for easy expansion.
 
-For more details on the `locawise` package itself, please refer to its repository.
+## Behind the Scenes: Efficiency and Resilience
 
-## Supported Features
+- **i18n.lock File**: Locawise creates and uses an i18n.lock file in your localization directory. This file tracks the hashes of translated strings. This intelligent mechanism ensures:
+  - Only new or genuinely changed keys in your source language file are sent for translation, saving API calls and costs.
+  - If you manually edit a translation in a target language file, Locawise will respect your change unless the corresponding source language string is modified.
 
-- **File Formats**: `.json` (key-value), `.properties`
-- **LLM Providers**: OpenAI, Google Vertex AI
-- **Automation**: Automatic change detection and Pull Request creation.
+- **Exponential Backoff**: When communicating with LLM APIs, Locawise implements an exponential random backoff retry strategy. This makes it resilient to temporary network issues or API rate limits (TPM limits), significantly increasing the reliability of your localization pipeline.
 
-Future plans may include support for more file formats (e.g., YAML, XML, ARB).
+## 🤝 Contributing
 
-## Cost Considerations
-Costs depend on the LLM provider you use:
+Contributions are welcome! Whether it's bug reports, feature requests, or pull requests, please feel free to contribute to making Locawise even better.
 
-**OpenAI:** Charged per token according to OpenAI pricing
-**VertexAI (Gemini):** Extremely cost-effective, nearly zero for most projects
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit Issues or Pull Requests.
-
-## License
+## 📜 License
 
 This project is licensed under the MIT License.
 
