@@ -288,7 +288,7 @@ Here's a detailed breakdown of the inputs for locawise-action:
 | glossary | Define specific terms and their exact required translations. Provide as a YAML formatted string (e.g., "term1: translation1\nterm2: translation2"). Multi-line input is supported. | false | '' |
 | tone | A description of the desired tone for the translations (e.g., "Formal and professional", "Playful and witty", "Neutral"). | false | '' |
 | llm-model | The specific LLM model name from the provider (e.g., gpt-4o, gemini-1.5-flash). If omitted, Locawise uses a default model from the selected provider. | false | '' |
-| llm-location | The geographic location or region for the LLM API endpoint, particularly for Vertex AI (e.g., us-central1, europe-west1). | false | '' |
+| llm-location | The geographic location or region for the LLM API endpoint, this is required for Vertex AI (e.g., us-central1, europe-west1). | false | '' |
 
 ## Choosing Your LLM Provider
 
