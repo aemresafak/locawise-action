@@ -1,5 +1,5 @@
 name: 'locawise'
-description: 'Localizes applications'
+description: 'Localizes applications using locawise'
 inputs:
   openai-api-key:
     description: 'OpenAI API key if you are using the GPT models'
@@ -7,6 +7,39 @@ inputs:
     default: ''
   vertex-ai-service-account-key-base64:
     description: 'Vertex AI service account key in base64 format if you are using a model from Vertex AI'
+    required: false
+    default: ''
+  source-lang-code:
+    description: 'The language code of your primary language file (e.g., en).'
+    required: true
+  file-name-pattern:
+    description: 'How your language files are named. {language} is replaced by the language code (e.g., en, tr).'
+    required: true
+  target-lang-codes:
+    description: 'A comma-separated list of language codes you want to translate into (e.g., es,fr,de).'
+    required: true
+  localization-root-path:
+    description: 'Path to the directory containing your language files (relative to repo root).'
+    required: false
+    default: ''
+  context:
+    description: 'Detailed instructions for the AI about your application, tone, style, and target audience.'
+    required: false
+    default: ''
+  glossary: # User should provide a YAML formatted string for the dictionary content
+    description: 'Define specific terms and their required translations (YAML formatted string e.g., "term1: translation1\nterm2: translation2").'
+    required: false
+    default: ''
+  tone:
+    description: 'A description of the desired tone (e.g., "Formal", "Playful", "Professional but friendly").'
+    required: false
+    default: ''
+  llm-model:
+    description: 'The specific model name from the provider (e.g., gpt-4o, gemini-1.5-flash). If omitted, locawise will use a default.'
+    required: false
+    default: ''
+  llm-location:
+    description: 'The geographic location or region for the LLM API endpoint, if applicable (e.g., for Vertex AI).'
     required: false
     default: ''
 outputs:
@@ -18,79 +51,82 @@ runs:
   steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.13'
-
+        python-version: '3.13' # As per your original action
     - name: Set up locawise
-      run:  pip3 install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ locawise -q --disable-pip-version-check
+      run: pip3 install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ locawise -q --disable-pip-version-check
       shell: bash
+    - name: Create i18n.yaml
+      shell: bash
+      run: |
+        echo "version: v1.0" >> i18n.yaml
+        echo "source-lang-code: ${{ inputs.source-lang-code }}" >> i18n.yaml
+        echo "file-name-pattern: ${{ inputs.file-name-pattern }}" >> i18n.yaml
+        echo "target-lang-codes:" >> i18n.yaml
+        IFS=',' read -ra LANG_CODES <<< "${{ inputs.target-lang-codes }}"
+        for lang_code in "${LANG_CODES[@]}"; do
+          echo "  - $lang_code" >> i18n.yaml
+        done
+        if [[ "${{ inputs.localization-root-path }}" != "" ]]; then
+          echo "localization-root-path: ${{ inputs.localization-root-path }}" >> i18n.yaml
+        fi
+        if [[ "${{ inputs.context }}" != "" ]]; then
+          echo "context: |" >> i18n.yaml
+          echo "  ${{ inputs.context }}" | sed 's/^/  /' >> i18n.yaml # Indent multiline context
+        fi
+        if [[ "${{ inputs.glossary }}" != "" ]]; then
+          echo "glossary:" >> i18n.yaml
+          echo "${{ inputs.glossary }}" | sed 's/^/  /' >> i18n.yaml # Assumes input is YAML formatted, indent it
+        else
+          echo "glossary: {}" >> i18n.yaml # Default empty dictionary
+        fi
+        if [[ "${{ inputs.tone }}" != "" ]]; then
+          echo "tone: ${{ inputs.tone }}" >> i18n.yaml
+        fi
+        if [[ "${{ inputs.llm-model }}" != "" ]]; then
+          echo "llm-model: ${{ inputs.llm-model }}" >> i18n.yaml
+        fi
+        if [[ "${{ inputs.llm-location }}" != "" ]]; then
+          echo "llm-location: ${{ inputs.llm-location }}" >> i18n.yaml
+        fi
+        echo "--- Generated i18n.yaml ---"
+        cat i18n.yaml
+        echo "---------------------------"
 
     - name: Decode Vertex AI Service Account Key for Vertex AI
       id: decode-key
       env:
         VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64: ${{ inputs.vertex-ai-service-account-key-base64 }}
-      if: ${{ env.VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64 != '' }}
+      if: env.VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64 != ''
       run: |
         DECODED_KEY=$(echo "$VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64" | tr -d '\n' | base64 --decode)
         echo "decoded_key<<EOF" >> $GITHUB_OUTPUT
         echo "$DECODED_KEY" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
       shell: bash
-
-
     - name: Authenticate to Google Cloud for VertexAI
       env:
         VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64: ${{ inputs.vertex-ai-service-account-key-base64 }}
-      if: ${{ env.VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64 != '' }}
+      if: env.VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64 != ''
       uses: google-github-actions/auth@v2
       with:
         credentials_json: ${{ steps.decode-key.outputs.decoded_key }}
-
     - name: Run locawise
       run: python3 -m locawise i18n.yaml
       shell: bash
-
-    - name: Get commit info
-      id: commit-info
-      run: |
-        SHA_SHORT=$(git rev-parse --short HEAD)
-        echo "sha_short=$SHA_SHORT" >> $GITHUB_OUTPUT
-        COMMIT_MSG=$(git log -1 --pretty=%s | tr -d '\n')
-        echo "commit_message=$COMMIT_MSG" >> $GITHUB_OUTPUT
-      shell: bash
-
-    - name: Check for changes
-      id: check-changes
-      run: |
-        if [[ -n "$(git status --porcelain)" ]]; then
-          echo "changes_detected=true" >> $GITHUB_OUTPUT
-        else
-          echo "changes_detected=false" >> $GITHUB_OUTPUT
-          echo "No changes detected in localization files. Skipping PR creation."
-        fi
-      shell: bash
+      env:
+        OPENAI_API_KEY: ${{ inputs.openai-api-key }} # Pass OpenAI key if provided
 
     - name: Clean up
+      if: always() # Always run cleanup
       run: |
-        rm -rf locawise
-        rm -f "$GOOGLE_APPLICATION_CREDENTIALS"
-        rm -f service-account-key.json
+        echo "Cleaning up temporary files..."
+        rm -f i18n.yaml
+        rm -rf locawise # This might be an unintended deletion if 'locawise' is a source directory
+        if [[ -n "$GOOGLE_APPLICATION_CREDENTIALS" && -f "$GOOGLE_APPLICATION_CREDENTIALS" ]]; then
+           rm -f "$GOOGLE_APPLICATION_CREDENTIALS"
+         fi
+        echo "Cleanup complete."
       shell: bash
-
-    - name: Create Pull Request
-      uses: peter-evans/create-pull-request@v7
-      with:
-        commit-message: "[Bot] Update localization files from commit ${{ steps.commit-info.outputs.sha_short }}"
-        title: "[Bot] Localization Update (${{ steps.commit-info.outputs.sha_short }})"
-        body: |
-          🤖 **This PR was automatically created by the locawise workflow.**
-
-          Localization files have been updated from commit ${{ steps.commit-info.outputs.sha_short }}.
-
-          Original commit message: "${{ steps.commit-info.outputs.commit_message }}"
-        branch: localization-${{ steps.commit-info.outputs.sha_short }}
-        base: main
-        labels: automated-pr, bot
