@@ -54,52 +54,74 @@ runs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.13' # As per your original action
-    - name: Set up locawise
-      run: pip3 install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ locawise -q --disable-pip-version-check
-      shell: bash
+        python-version: '3.13'
     - name: Create i18n.yaml
       shell: bash
+      env:
+        INPUT_SOURCE_LANG_CODE: ${{ inputs.source-lang-code }}
+        INPUT_FILE_NAME_PATTERN: ${{ inputs.file-name-pattern }}
+        INPUT_TARGET_LANG_CODES: ${{ inputs.target-lang-codes }}
+        INPUT_LOCALIZATION_ROOT_PATH: ${{ inputs.localization-root-path }}
+        INPUT_CONTEXT: ${{ inputs.context }}
+        INPUT_GLOSSARY: ${{ inputs.glossary }}
+        INPUT_TONE: ${{ inputs.tone }}
+        INPUT_LLM_MODEL: ${{ inputs.llm-model }}
+        INPUT_LLM_LOCATION: ${{ inputs.llm-location }}
       run: |
-        echo "version: v1.0" >> i18n.yaml
-        echo "source-lang-code: ${{ inputs.source-lang-code }}" >> i18n.yaml
-        echo "file-name-pattern: ${{ inputs.file-name-pattern }}" >> i18n.yaml
+        # Create or overwrite i18n.yaml with the version
+        printf "version: v1.0\n" > i18n.yaml
+
+        # Append other configurations
+        printf "source-lang-code: %s\n" "$INPUT_SOURCE_LANG_CODE" >> i18n.yaml
+        printf "file-name-pattern: %s\n" "$INPUT_FILE_NAME_PATTERN" >> i18n.yaml
+
         echo "target-lang-codes:" >> i18n.yaml
-        IFS=',' read -ra LANG_CODES <<< "${{ inputs.target-lang-codes }}"
-        for lang_code in "${LANG_CODES[@]}"; do
-          echo "  - $lang_code" >> i18n.yaml
+        # Safely read comma-separated lang codes
+        IFS=',' read -ra LANG_CODES_ARRAY <<< "$INPUT_TARGET_LANG_CODES"
+        for lang_code in "${LANG_CODES_ARRAY[@]}"; do
+          # Trim whitespace from lang_code (e.g., if input is "en, fr, de")
+          trimmed_lang_code=$(echo "$lang_code" | awk '{$1=$1};1') # awk is robust for trimming
+          if [[ -n "$trimmed_lang_code" ]]; then # Only add if not empty after trim
+             printf "  - %s\n" "$trimmed_lang_code" >> i18n.yaml
+          fi
         done
-        if [[ "${{ inputs.localization-root-path }}" != "" ]]; then
-          echo "localization-root-path: ${{ inputs.localization-root-path }}" >> i18n.yaml
+
+        if [[ -n "$INPUT_LOCALIZATION_ROOT_PATH" ]]; then
+          printf "localization-root-path: %s\n" "$INPUT_LOCALIZATION_ROOT_PATH" >> i18n.yaml
         fi
-        if [[ "${{ inputs.context }}" != "" ]]; then
+
+        if [[ -n "$INPUT_CONTEXT" ]]; then
           echo "context: |" >> i18n.yaml
-          echo "  ${{ inputs.context }}" | sed 's/^/  /' >> i18n.yaml # Indent multiline context
+          # Correctly indent multi-line context, ensuring each line is processed
+          printf "%s\n" "$INPUT_CONTEXT" | sed 's/^/  /' >> i18n.yaml
         fi
-        if [[ "${{ inputs.glossary }}" != "" ]]; then
+
+        if [[ -n "$INPUT_GLOSSARY" ]]; then
           echo "glossary:" >> i18n.yaml
-          echo "${{ inputs.glossary }}" | sed 's/^/  /' >> i18n.yaml # Assumes input is YAML formatted, indent it
+          # Correctly indent multi-line glossary (input should be YAML-formatted content)
+          printf "%s\n" "$INPUT_GLOSSARY" | sed 's/^/  /' >> i18n.yaml
         else
-          echo "glossary: {}" >> i18n.yaml # Default empty dictionary
+          # If glossary input is empty, provide an empty YAML mapping
+          echo "glossary: {}" >> i18n.yaml
         fi
-        if [[ "${{ inputs.tone }}" != "" ]]; then
-          echo "tone: ${{ inputs.tone }}" >> i18n.yaml
+
+        if [[ -n "$INPUT_TONE" ]]; then
+          printf "tone: %s\n" "$INPUT_TONE" >> i18n.yaml
         fi
-        if [[ "${{ inputs.llm-model }}" != "" ]]; then
-          echo "llm-model: ${{ inputs.llm-model }}" >> i18n.yaml
+
+        if [[ -n "$INPUT_LLM_MODEL" ]]; then
+          printf "llm-model: %s\n" "$INPUT_LLM_MODEL" >> i18n.yaml
         fi
-        if [[ "${{ inputs.llm-location }}" != "" ]]; then
-          echo "llm-location: ${{ inputs.llm-location }}" >> i18n.yaml
+
+        if [[ -n "$INPUT_LLM_LOCATION" ]]; then
+          printf "llm-location: %s\n" "$INPUT_LLM_LOCATION" >> i18n.yaml
         fi
-        echo "--- Generated i18n.yaml ---"
-        cat i18n.yaml
-        echo "---------------------------"
 
     - name: Decode Vertex AI Service Account Key for Vertex AI
       id: decode-key
       env:
         VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64: ${{ inputs.vertex-ai-service-account-key-base64 }}
-      if: env.VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64 != ''
+      if: env.VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64 != '' # Note: Using env context for if condition
       run: |
         DECODED_KEY=$(echo "$VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64" | tr -d '\n' | base64 --decode)
         echo "decoded_key<<EOF" >> $GITHUB_OUTPUT
@@ -109,22 +131,32 @@ runs:
     - name: Authenticate to Google Cloud for VertexAI
       env:
         VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64: ${{ inputs.vertex-ai-service-account-key-base64 }}
-      if: env.VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64 != ''
+      if: env.VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64 != '' # Note: Using env context for if condition
       uses: google-github-actions/auth@v2
       with:
         credentials_json: ${{ steps.decode-key.outputs.decoded_key }}
+
+
+
+    - name: Set up locawise
+      run: pip3 install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ locawise -q --disable-pip-version-check
+      shell: bash
+
+
     - name: Run locawise
       run: python3 -m locawise i18n.yaml
       shell: bash
       env:
-        OPENAI_API_KEY: ${{ inputs.openai-api-key }} # Pass OpenAI key if provided
+        OPENAI_API_KEY: ${{ inputs.openai-api-key }}
+
+
 
     - name: Clean up
       if: always() # Always run cleanup
       run: |
         echo "Cleaning up temporary files..."
         rm -f i18n.yaml
-        rm -rf locawise # This might be an unintended deletion if 'locawise' is a source directory
+        rm -rf locawise
         if [[ -n "$GOOGLE_APPLICATION_CREDENTIALS" && -f "$GOOGLE_APPLICATION_CREDENTIALS" ]]; then
            rm -f "$GOOGLE_APPLICATION_CREDENTIALS"
          fi
