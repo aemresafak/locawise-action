@@ -118,7 +118,7 @@ jobs:
 
           # === Optional: LLM Specifics ===
           # llm-model: 'gemini-1.5-flash' # e.g., 'gpt-4o', 'gemini-1.5-pro' (uses provider default if unset)
-          # llm-location: 'us-central1' # For Vertex AI, if needed
+          llm-location: 'us-central1' # For Vertex AI
 
       - name: Get commit info
         id: commit-info
