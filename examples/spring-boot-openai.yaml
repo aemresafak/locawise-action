@@ -30,7 +30,7 @@ jobs:
             Canvas: The area where users create their work.
             Export: The action of saving work to a file.
 
-         tone: Be as polite as possible while also being friendly
+          tone: Be as polite as possible while also being friendly
 
           llm-model: 'gpt-4o'
 
