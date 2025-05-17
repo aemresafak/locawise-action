@@ -1,17 +1,14 @@
 name: Localize Application Content
-
 on:
   push:
     branches:
       - main # Or your default branch
-
 permissions:
   contents: write
   pull-requests: write
-
 jobs:
   localize:
-    runs-on:  ubuntu-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Run Locawise Localization
         uses: aemresafak/locawise-action@v1 # Use the latest version
@@ -21,7 +18,6 @@ jobs:
           file-name-pattern: 'values-{language}/strings.xml'
           target-lang-codes: 'es,fr,de,it,tr,ja' # Comma-separated target languages
           localization-root-path: 'app/src/main/res/'
-
           context: |
             You are translating for "ProduceNow", a productivity application for creative professionals.
             Our users are designers, writers, and artists.
@@ -29,11 +25,8 @@ jobs:
             Project: A user's main workspace.
             Canvas: The area where users create their work.
             Export: The action of saving work to a file.
-
-         tone: Be as polite as possible while also being friendly
-
-         llm-model: 'gpt-4o'
-
+          tone: Be as polite as possible while also being friendly
+          llm-model: 'gpt-4o'
       - name: Get commit info
         id: commit-info
         run: |
@@ -42,8 +35,7 @@ jobs:
           COMMIT_MSG=$(git log -1 --pretty=%s | tr -d '\n')
           echo "commit_message=$COMMIT_MSG" >> $GITHUB_OUTPUT
         shell: bash
-
-    # Feel free to change any part of the pull request!
+      # Feel free to change any part of the pull request!
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
