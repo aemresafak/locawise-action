@@ -33,7 +33,6 @@ jobs:
          tone: Be as polite as possible while also being friendly
 
           llm-model: 'gpt-4o'
-          llm-location: 'us-central1'
 
       - name: Get commit info
         id: commit-info
