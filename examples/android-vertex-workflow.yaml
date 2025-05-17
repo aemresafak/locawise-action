@@ -20,7 +20,7 @@ jobs:
           source-lang-code: 'en'
           file-name-pattern: 'values-{language}/strings.xml'
           target-lang-codes: 'es,fr,de,it,tr,ja' # Comma-separated target languages
-          localization-root-path: 'src/main/res/'
+          localization-root-path: 'app/src/main/res/'
 
           context: |
             You are translating for "ProduceNow", a productivity application for creative professionals.
