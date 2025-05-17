@@ -29,11 +29,10 @@ jobs:
             Project: A user's main workspace.
             Canvas: The area where users create their work.
             Export: The action of saving work to a file.
+          tone: Be as polite as possible while also being friendly
 
-         tone: Be as polite as possible while also being friendly
-
-         llm-model: 'gemini-2.0-flash'
-         llm-location: 'us-central1' 
+          llm-model: 'gemini-2.0-flash'
+          llm-location: 'us-central1' 
 
       - name: Get commit info
         id: commit-info
