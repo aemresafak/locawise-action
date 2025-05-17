@@ -5,30 +5,26 @@
 
 # Locawise GitHub Action 🌍🤖✨
 
-## Table of Contents
+Supporting 2 or 3 languages? With Locawise, support virtually ALL languages for the price of a coffee! ☕
 
-- [Why Choose Locawise?](#why-choose-locawise)
+Locawise is your smart AI localization co-pilot, seamlessly integrated into your GitHub workflow. It automatically detects changes in your application's localization files, translates them using cutting-edge AI, and creates a pull request with the updates. Go global, effortlessly!
+
+## Table of Contents
+- [Features](#features)
 - [How It Works](#how-it-works)
 - [Quick Start](#-quick-start)
   - [Create Workflow File](#create-workflow-file)
   - [Add Secrets](#add-secrets)
   - [Enable Automatic PRs](#enable-automatic-prs)
   - [Push to main](#push-to-main)
-- [Basic Usage: Example with a React App](#-basic-usage-example-with-a-react-app)
 - [Action Inputs](#action-inputs)
-- [Export to Sheets](#export-to-sheets)
-- [The i18n.yaml Configuration File](#-the-i18nyaml-configuration-file-generated-by-the-action)
 - [Choosing Your LLM Provider](#choosing-your-llm-provider)
 - [Supported File Formats](#supported-file-formats)
-- [Behind the Scenes: Efficiency and Resilience](#behind-the-scenes-efficiency-and-resilience)
+- [Behind The Scenes](#behind-the-scenes)
 - [Contributing](#-contributing)
 - [License](#-license)
 
-Supporting 2 or 3 languages? With Locawise, support virtually ALL languages for the price of a coffee! ☕
-
-Locawise is your smart AI localization co-pilot, seamlessly integrated into your GitHub workflow. It automatically detects changes in your application's localization files, translates them using cutting-edge AI, and creates a pull request with the updates. Go global, effortlessly!
-
-## Why Choose Locawise?
+## Features
 
 - 🚀 **Automated & Effortless**: Set it up once, and Locawise handles new translations whenever you push to your main branch. No more manual tracking or tedious copy-pasting!
 - 🧠 **Context-Aware AI Translations**: Powered by OpenAI (GPT models) and Google Vertex AI (Gemini models), Locawise understands your application's context, glossary, and desired tone, delivering translations that are not just accurate but appropriate.
@@ -56,6 +52,24 @@ The locawise-action leverages the locawise Python package.
 ## 🚀 Quick Start
 
 Get Locawise up and running in your project in minutes!
+
+### Additional Examples
+
+We provide several example workflows for different frameworks and LLM providers:
+
+- **React Applications**
+  - [React with OpenAI](./examples/react-openai-workflow.yaml) - For React/Next.js apps using GPT models
+  - [React with Vertex AI](./examples/react-vertex-workflow.yaml) - For React/Next.js apps using Gemini models
+
+- **Android Applications**
+  - [Android with OpenAI](./examples/android-openai-workflow.yaml) - For Android apps using GPT models
+  - [Android with Vertex AI](./examples/android-vertex-workflow.yaml) - For Android apps using Gemini models
+
+- **Spring Boot Applications**
+  - [Spring Boot with OpenAI](./examples/spring-boot-openai.yaml) - For Java Spring Boot apps using GPT models
+  - [Spring Boot with Vertex AI](./examples/spring-boot-vertex-workflow.yaml) - For Java Spring Boot apps using Gemini models
+
+Each example contains specific configurations optimized for the framework and LLM provider combination.
 
 ### Create Workflow File
 
@@ -115,6 +129,7 @@ jobs:
           echo "commit_message=$COMMIT_MSG" >> $GITHUB_OUTPUT
         shell: bash
 
+    # Feel free to change any part of the pull request!
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v7
         with:
@@ -149,122 +164,6 @@ jobs:
 
 Make a change to your source language file (e.g., `public/locales/en.json`) and push to your main branch. Locawise will automatically run, translate, and create a PR!
 
-## 📖 Basic Usage: Example with a React App
-
-Let's say you have a React application (like one created with Create React App or Vite) structured to serve localization files from the public directory:
-
-```
-my-react-app/
-├── public/
-│   └── locales/               <-- Your localization files live here
-│       ├── en.json            <-- Source language
-│       ├── es.json
-│       └── fr.json
-├── src/
-│   ├── components/
-│   └── App.js
-└── package.json
-```
-
-Your source file `public/locales/en.json` might look like:
-
-```json
-{
-  "app.title": "My Awesome React App",
-  "greeting.morning": "Good morning, {name}!",
-  "button.submit": "Submit"
-}
-```
-
-Here's how you'd configure the locawise-action in your `.github/workflows/localize.yml`:
-
-```yaml
-# ... (name, on, permissions, jobs.localize.runs-on sections as above) ...
-    steps:
-      - name: Run Locawise Localization
-        uses: aemresafak/locawise-action@v1
-        with:
-          # Assuming Vertex AI for this example
-          vertex-ai-service-account-key-base64: ${{ secrets.VERTEX_AI_SERVICE_ACCOUNT_KEY_BASE64 }}
-          source-lang-code: 'en'
-          file-name-pattern: '{language}.json' # Standard naming for React/Vue i18n
-          target-lang-codes: 'es,fr' # Translate to Spanish and French
-          localization-root-path: 'public/locales' # Path to the directory
-          context: |
-            You are translating for "My Awesome React App".
-            This is a user-facing application for horse owners.
-          glossary: |
-            React: A JavaScript library for building user interfaces. (Keep as "React")
-          # llm-model: 'gemini-1.5-flash' # Optional: Specify a model
-# ... (Create Pull Request steps as above) ...
-```
-
-When you update `public/locales/en.json` and push, Locawise will:
-
-1. Detect the changes.
-2. Translate them into Spanish (`public/locales/es.json`) and French (`public/locales/fr.json`).
-3. Create a PR with these updated files.
-
-It's that simple!
-
-## 📖 Example: Spring Boot Project with Properties Files
-
-For a Spring Boot application using the common `messages_*.properties` files for internationalization:
-
-```
-my-spring-app/
-├── src/
-│   └── main/
-│       ├── java/
-│       │   └── com/
-│       │       └── myapp/
-│       │           └── Application.java
-│       └── resources/
-│           ├── messages_en.properties    <-- Source language
-│           ├── messages_es.properties
-│           └── messages_fr.properties
-└── pom.xml
-```
-
-Your source file `src/main/resources/messages_en.properties` might look like:
-
-```properties
-app.title=My Spring Application
-greeting.welcome=Welcome to our application, {0}!
-button.save=Save
-button.cancel=Cancel
-error.required=This field is required
-```
-
-Here's how you'd configure the locawise-action in your `.github/workflows/localize.yml`:
-
-```yaml
-# ... (name, on, permissions, jobs.localize.runs-on sections as above) ...
-    steps:
-      - name: Run Locawise Localization
-        uses: aemresafak/locawise-action@v1
-        with:
-          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-          source-lang-code: 'en'
-          file-name-pattern: 'messages_{language}.properties' # Standard Spring Boot naming
-          target-lang-codes: 'es,fr,de,ja' # Translate to multiple languages
-          localization-root-path: 'src/main/resources' # Path to the directory
-          context: |
-            This is a business application for financial services.
-          glossary: |
-            Spring Boot: A Java framework for building web applications. (Keep as "Spring Boot")
-          tone: "Formal and professional"
-          llm-model: 'gpt-4o' # Using OpenAI's GPT-4o for high quality translations
-# ... (Create Pull Request steps as above) ...
-```
-
-When you update `src/main/resources/messages_en.properties` and push to your main branch, Locawise will:
-
-1. Detect the changes.
-2. Translate only the modified keys into Spanish, French, German, and Japanese.
-3. Update the respective properties files while preserving the placeholders like `{0}`.
-4. Create a PR with the updated files.
-
 ## Action Inputs
 
 Here's a detailed breakdown of the inputs for locawise-action:
@@ -296,15 +195,14 @@ You can provide secrets for the provider that you want to use.
 
 - ✅ `.json` (key-value, including nested objects; commonly used with `{language}.json` naming)
 - ✅ `.properties` (Java properties files; commonly used with `messages_{language}.properties` naming)
+- ✅ `.xml` (Android strings.xml files; commonly used with values-{language}/strings.xml)
 - 🔜 More formats coming soon! The architecture is designed for easy expansion.
 
-## Behind the Scenes: Efficiency and Resilience
+### Behind the Scenes
 
-- **i18n.lock File**: Locawise creates and uses an i18n.lock file in your localization directory. This file tracks the hashes of translated strings. This intelligent mechanism ensures:
-  - Only new or genuinely changed keys in your source language file are sent for translation, saving API calls and costs.
-  - If you manually edit a translation in a target language file, Locawise will respect your change unless the corresponding source language string is modified.
+Want to understand how Locawise works under the hood? Visit the main Locawise Python package repository at [https://github.com/aemresafak/locawise](https://github.com/aemresafak/locawise) to learn about the core implementation, contribute to the underlying functionality, or report issues with the translation engine itself.
 
-- **Exponential Backoff**: When communicating with LLM APIs, Locawise implements an exponential random backoff retry strategy. This makes it resilient to temporary network issues or API rate limits (TPM limits), significantly increasing the reliability of your localization pipeline.
+
 
 ## 🤝 Contributing
 
