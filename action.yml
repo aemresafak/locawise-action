@@ -1,5 +1,8 @@
 name: 'locawise'
 description: 'Localizes applications using locawise'
+branding:
+  icon: 'globe'
+  color: 'blue'
 inputs:
   openai-api-key:
     description: 'OpenAI API key if you are using the GPT models'
