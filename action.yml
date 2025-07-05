@@ -142,7 +142,7 @@ runs:
 
 
     - name: Set up locawise
-      run: pip3 install locawise -q --disable-pip-version-check
+      run: pip3 install locawise ~= 1.0 -q --disable-pip-version-check
       shell: bash
 
 
