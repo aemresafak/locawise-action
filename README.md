@@ -200,7 +200,7 @@ You can provide secrets for the provider that you want to use.
 
 ### Behind the Scenes
 
-Want to understand how Locawise works under the hood? Visit the main Locawise Python package repository at [https://github.com/aemresafak/locawise](https://github.com/aemresafak/locawise) to learn about the core implementation, contribute to the underlying functionality, or report issues with the translation engine itself.
+Want to understand how Locawise works under the hood? Visit the main Locawise Python package repository at [https://github.com/aemresafak/locawise](https://github.com/aemresafak/locawise) to learn about the core implementation, contribute to the underlying functionality, or report issues with the translation engine itself. This action uses locawise 1.3.1.
 
 
 
